@@ -1,0 +1,1 @@
+/usr/bin/c++  -g   CMakeFiles/juez32.dir/main.cpp.o  -o juez32 
