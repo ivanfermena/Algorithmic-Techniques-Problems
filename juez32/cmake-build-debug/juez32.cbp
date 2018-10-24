@@ -84,6 +84,9 @@
 				</MakeCommands>
 			</Target>
 		</Build>
+		<Unit filename="/home/ivanfermena/Documents/git/algorithmic-techniques/juez32/GrafoDirigido.h">
+			<Option target="juez32"/>
+		</Unit>
 		<Unit filename="/home/ivanfermena/Documents/git/algorithmic-techniques/juez32/main.cpp">
 			<Option target="juez32"/>
 		</Unit>

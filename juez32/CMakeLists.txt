@@ -3,4 +3,4 @@ project(juez32)
 
 set(CMAKE_CXX_STANDARD 14)
 
-add_executable(juez32 main.cpp)
+add_executable(juez32 main.cpp GrafoDirigido.h)
