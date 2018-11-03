@@ -14,32 +14,49 @@
 class Arbolescencia {
     public:
         Arbolescencia(GrafoDirigido const& G) : marked(G.V()) {
-            _isArbol = true;
-            for (int i = 0; i < G.V(); ++i) {
-                elem_conex = i;
-                if(!marked[i])
-                    dfs(G, i);
+
+            _isArbol = false;
+            int posible_vertice = 0;
+
+            for (int j = 0; j < G.V(); ++j) {
+                if(G.ady(j).size() == 0){
+                    posible_vertice = j;
+                    _isArbol = true; // Posible solucion buena
+                }
             }
+
+            GrafoDirigido G_normal = G.inverso();
+
+            if(_isArbol) {
+                dfs(G_normal, posible_vertice);
+            }
+
+            // Comprobamos que esten marcados
+            for (bool item: marked) {
+                if(!item) {
+                    _isArbol = false;
+                    break;
+                }
+            }
+
+            number_sol = posible_vertice;
         }
 
         std::pair<int, bool> solutionArbolecencia(){
-            return std::pair<int, bool>(reservePostorden.top(), _isArbol);
+            return std::pair<int, bool>(number_sol, _isArbol);
         }
 
     private:
         std::vector<bool> marked; // marked[v] = ¿hay camino de s a v?
-        std::stack<int> reservePostorden;
         bool _isArbol;
-        int elem_conex;
+        int number_sol = 0;
 
         void dfs(GrafoDirigido const& G, int v) {
             marked[v] = true;
             for(int w : G.ady(v))
                 if(!marked[w])
                     dfs(G, w);
-                else if(w == elem_conex)
-                    _isArbol = false;
-            reservePostorden.push(v);
+                else _isArbol = false;
         }
 };
 
@@ -62,7 +79,10 @@ bool resuelveCaso() {
         graphs.ponArista(v, w);
     }
 
-    Arbolescencia arb(graphs);
+    // Obtenemos el inverso
+    GrafoDirigido graphsInv = graphs.inverso();
+
+    Arbolescencia arb(graphsInv);
 
     std::cout << (arb.solutionArbolecencia().second ? "SI " + std::to_string(arb.solutionArbolecencia().first) : "NO") << "\n";
 
