@@ -49,7 +49,7 @@ private:
 			cont_0++;
 		else if(conj == 0 && G.ady(v).size() > 0 && cont_1 != -1)
 			cont_1++;
-		
+
 		for (int w : G.ady(v)) {
 			if (marked[w] == -1) {
 				dfs(G, w, marked[v]);

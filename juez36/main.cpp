@@ -8,12 +8,12 @@
 
 class RoadsDrivingTrunk {
 public:
-    RoadsDrivingTrunk(GrafoValorado<int> const& G) : marked(G.V(), false) {
-        for (int v = 0; v < G.V(); ++v) {
-            if (!marked[v]) { // se recorre una nueva componente conexa
-                dfs(G, v);
-            }
-        }
+    RoadsDrivingTrunk(GrafoValorado<int> const& G, int t_ini ,int t_end, long int t_weight) : marked(G.V(), false), trunk_ini(t_ini) ,trunk_end(t_end), trunk_weight(t_weight) {
+        //for (int v = trunk_ini; v < G.V(); ++v) {
+        //    if (!marked[v]) { // se recorre una nueva componente conexa
+                dfs(G, trunk_ini);
+        //    }
+        //}
     }
 // tamaño máximo de una componente conexa
     int is_valid() const {
@@ -22,14 +22,19 @@ public:
 
 private:
     std::vector<bool> marked; // marked[v] = se ha visitado el vértice v?
-    int _is_ok = true;
+    int _is_ok = false;
+    int trunk_ini ,trunk_end;
+    long int trunk_weight;
 
 // recorrido en profundidad de la componente de v
     void dfs(GrafoValorado<int> const& G, int v) {
         marked[v] = true;
-        for (Arista<int> w : G.ady(v)) {
-            if (!marked[w.uno()]) {
-                dfs(G, w.uno());
+        for (Arista<int> a : G.ady(v)) {
+            int w = a.otro(v);
+            if (!marked[w] && a.valor() >= trunk_weight) {
+                if(w == trunk_end)
+                    _is_ok = true;
+                dfs(G, w);
             }
         }
     }
@@ -39,7 +44,7 @@ private:
 bool resuelveCaso(){
 
     int vertex, edges, vertex_ini, vertex_end;
-    int weight;
+    long int weight;
 
     std::cin >> vertex;
 
@@ -52,18 +57,21 @@ bool resuelveCaso(){
 
     for (int i = 0; i < edges; ++i) {
         std::cin >> vertex_ini >> vertex_end >> weight;
-        graph.ponArista(Arista<int>(vertex_ini, vertex_end, weight));
+        graph.ponArista(Arista<int>(vertex_ini-1, vertex_end-1, weight));
     }
 
     // Ahora llegan las peticiones de viajes
-    int number_trunks, trunk_ini, trunk_end, trunk_weight;
+    int number_trunks, trunk_ini, trunk_end;
+    long int trunk_weight;
 
     std::cin >> number_trunks;
     for (int j = 0; j < number_trunks; ++j) {
         std::cin >> trunk_ini >> trunk_end >> trunk_weight;
-        // Calcular si hay
+        RoadsDrivingTrunk roads(graph, trunk_ini-1, trunk_end-1, trunk_weight);
+        std::cout << (roads.is_valid() ? "SI\n" : "NO\n");
     }
 
+    return true;
 }
 
 int main() {

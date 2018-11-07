@@ -9,11 +9,16 @@
 class Bipartito {
 public:
     // Constructor de marcadores que gestiona si has pasado por el
-    Bipartito(const Grafo& G) : marked(G.V(), false), _is_bipartito(true), colors(G.V(), -1) {
+    Bipartito(const Grafo& G) : marked(G.V(), false), _is_bipartito(true), colors(G.V(), -1), numGuardias(0) {
         int color = 0;
         for (auto v = 0; v < G.V(); ++v) {
             if (!marked[v]) {
-                dfs(G, v, color);
+                int minimo = 0;
+                int value_0 = 0;
+                int value_1 = 0;
+                dfs(G, v, color, value_0, value_1);
+                minimo = std::min(value_0, value_1);
+                numGuardias += minimo;
             }
         }
     }
@@ -23,37 +28,37 @@ public:
     }
 
     int get_min_color(){
-        return std::min(value_0, value_1);
+        return numGuardias;
     }
 
 private:
     std::vector<bool> marked; // marked[v] = se ha visitado el vértice v?
     std::vector<int> colors; // colors[v] = 0 un color y 1 otro color, -1 si no tiene ningun valor
     bool _is_bipartito;
-    int value_0 = 1;
-    int value_1 = 1;
+    int numGuardias;
 
     // recorrido en profundidad de la componente de v
-    void dfs(Grafo const& G, int v, int & color) {
+    void dfs(Grafo const& G, int v, int & color, int & value_0, int & value_1) {
         marked[v] = true;
         colors[v] = color;
         int control_color = color;
 
+        if(control_color == 0) value_1++;
+        else value_0++;
+
         for (int w : G.ady(v)) {
             if (!marked[w]) {
                 //color = (control_color == 0 ? 1 : 0);
-                if(control_color == 0) {
+                if(control_color == 0)
                     color = 1;
-                    value_1++;
-                }
-                else{
+                else
                     color = 0;
-                    value_0++;
-                }
 
-                dfs(G, w, color);
-            }else if(colors[w] == control_color)
-                _is_bipartito = false;
+                dfs(G, w, color, value_0, value_1);
+            }else{
+                if(colors[w] == control_color)
+                    _is_bipartito = false;
+            }
         }
     }
 };
