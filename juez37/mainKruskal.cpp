@@ -6,64 +6,46 @@
 #include <queue>
 #include "GrafoValorado.h"
 #include "IndexPQ.h"
-
-class Comp{
-public:
-    bool operator()(Arista<int> const & left, Arista<int> const & right) const {
-        return left.valor() < right.valor()
-               || (left.valor() == right.valor() && left.uno() < right.uno());
-    }
-};
+#include "ConjuntosDisjuntos.h"
 
 class Bridges {
 public:
-    Bridges(GrafoValorado<int> const& G) : pq(G.V()), marked(G.V(), false) {
+    Bridges(GrafoValorado<int> const& G, IndexPQ<Arista<int>> & pq) : uf(G.V()), marked(G.V(), false) {
 
         _minimun_value = 0;
         _count_markes = 0;
-
-        visit(G, 0);
 
         while(!pq.empty() && mst.size() < G.V() - 1){
 
             Arista<int> e = pq.top().prioridad; pq.pop();
 
             int v = e.uno(), w = e.otro(v);
-            if(marked[v] && marked[w])
-                continue;
 
-            mst.push(e);
-            _minimun_value += e.valor();
-            if(!marked[v]) visit(G, v);
-            if(!marked[w]) visit(G, w);
+            if(!uf.unidos(v, w)) {
+                uf.unir(v, w);
+                mst.push(e);
+                _minimun_value += e.valor();
+            }
         }
 
+    }
+
+    int getCountMarkes(){
+        return uf.num_cjtos();
     }
 
     int getCountMinimal(){
         return _minimun_value;
     }
 
-    int getCountMarkes(){
-        return _count_markes;
-    }
-
-
 private:
-    std::vector<bool> marked;
+
     std::queue<Arista<int>> mst;
-    IndexPQ<Arista<int>, Comp> pq;
+    ConjuntosDisjuntos uf;
+    std::vector<bool> marked;
+
     int _minimun_value;
     int _count_markes;
-
-    void visit(GrafoValorado<int> G, int v)
-    {
-        marked[v] = true;
-        _count_markes++;
-        for (Arista<int> e : G.ady(v))
-            if (!marked[e.otro(v)])
-                pq.update(e.otro(v), e);
-    }
 };
 
 
@@ -80,14 +62,18 @@ bool resuelveCaso(){
 
     GrafoValorado<int> graph(vertex);
 
+    IndexPQ<Arista<int>> pq(edges);
+
     for (int i = 0; i < edges; ++i) {
         std::cin >> vertex_ini >> vertex_end >> weight;
-        graph.ponArista(Arista<int>(vertex_ini-1, vertex_end-1, weight));
+        Arista<int> aris(vertex_ini-1, vertex_end-1, weight);
+        graph.ponArista(aris);
+        pq.update(i, aris);
     }
 
-    Bridges bridge(graph);
+    Bridges bridge(graph, pq);
 
-    if(bridge.getCountMarkes() == graph.V())
+    if(bridge.getCountMarkes() == 1)
         std::cout << bridge.getCountMinimal() << "\n";
     else
         std::cout << "No hay puentes suficientes" << "\n";

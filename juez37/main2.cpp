@@ -7,35 +7,19 @@
 #include "GrafoValorado.h"
 #include "IndexPQ.h"
 
-class Comp{
-public:
-    bool operator()(Arista<int> const & left, Arista<int> const & right) const {
-        return left.valor() < right.valor()
-               || (left.valor() == right.valor() && left.uno() < right.uno());
-    }
-};
-
 class Bridges {
 public:
-    Bridges(GrafoValorado<int> const& G) : pq(G.V()), marked(G.V(), false) {
+    Bridges(GrafoValorado<int> const& G) : pq(G.V()), distTo(G.V(), 99999), edgeTo(G.V(), Arista<int>(0, 0 ,0)), marked(G.V(), false) {
 
         _minimun_value = 0;
         _count_markes = 0;
 
-        visit(G, 0);
+        distTo[0] = 0;
+        pq.push(0, Arista<int>(0, 0 ,0));
 
-        while(!pq.empty() && mst.size() < G.V() - 1){
-
-            Arista<int> e = pq.top().prioridad; pq.pop();
-
-            int v = e.uno(), w = e.otro(v);
-            if(marked[v] && marked[w])
-                continue;
-
-            mst.push(e);
-            _minimun_value += e.valor();
-            if(!marked[v]) visit(G, v);
-            if(!marked[w]) visit(G, w);
+        while(!pq.empty()){
+            Arista<int> auxArista = pq.top().prioridad; pq.pop();
+            visit(G, auxArista.uno());
         }
 
     }
@@ -51,18 +35,30 @@ public:
 
 private:
     std::vector<bool> marked;
-    std::queue<Arista<int>> mst;
-    IndexPQ<Arista<int>, Comp> pq;
+    IndexPQ<Arista<int>> pq;
+    std::vector<Arista<int>> edgeTo;
+    std::vector<int> distTo;
+
     int _minimun_value;
     int _count_markes;
 
-    void visit(GrafoValorado<int> G, int v)
-    {
+    void visit(GrafoValorado<int> G, int v){
+
         marked[v] = true;
         _count_markes++;
-        for (Arista<int> e : G.ady(v))
-            if (!marked[e.otro(v)])
-                pq.update(e.otro(v), e);
+
+        for (Arista<int> e : G.ady(v)) {
+            int w = e.otro(v);
+
+            if(marked[w]) continue;
+
+            if (e.valor() < distTo[w]) {
+                edgeTo[w] = e;
+                distTo[w] = e.valor();
+                _minimun_value += e.valor();
+                pq.update(w, e);
+            }
+        }
     }
 };
 
