@@ -4,66 +4,79 @@
 #include <iostream>
 #include <iomanip>
 #include <queue>
-#include "GrafoValorado.h"
 #include "IndexPQ.h"
+#include "ConjuntosDisjuntos.h"
+#include "GrafoDirigidoValorado.h"
+
+class AristaTime{
+public:
+    AristaTime(AristaDirigida<int> a, int c):aris(a), cost(c){}
+    AristaTime():aris(AristaDirigida<int>(0,0,0)), cost(0){}
+
+    AristaDirigida<int> gestArista() const{
+        return aris;
+    }
+
+    int getCost() const{
+        return cost;
+    }
+
+private:
+    AristaDirigida<int> aris;
+    int cost;
+};
 
 class Comp{
 public:
-    bool operator()(Arista<int> const & left, Arista<int> const & right) const {
-        return left.valor() < right.valor()
-               || (left.valor() == right.valor() && left.uno() < right.uno());
+    bool operator()(AristaTime left, AristaTime right) {
+        return left.gestArista().valor() < right.gestArista().valor()
+               || (left.gestArista().valor() == right.gestArista().valor() && left.getCost() < right.getCost());
     }
 };
 
-class Bridges {
+class Web {
 public:
-    Bridges(GrafoValorado<int> const& G) : pq(G.V()), marked(G.V(), false) {
+    Web(GrafoDirigidoValorado<int> const& G, IndexPQ<AristaTime, Comp> & pq, std::vector<int> & costTime) : uf(G.V()), lastElem(false) {
 
         _minimun_value = 0;
-        _count_markes = 0;
 
-        visit(G, 0);
+        while(!pq.empty() && mst.size() < G.V() - 1 && !lastElem){
 
-        while(!pq.empty() && mst.size() < G.V() - 1){
+            AristaDirigida<int> e = pq.top().prioridad.gestArista(); pq.pop();
 
-            Arista<int> e = pq.top().prioridad; pq.pop();
+            int v = e.from(), w = e.to();
 
-            int v = e.uno(), w = e.otro(v);
-            if(marked[v] && marked[w])
-                continue;
+            if(!uf.unidos(v, w)) {
+                uf.unir(v, w);
+                mst.push(e);
 
-            mst.push(e);
-            _minimun_value += e.valor();
-            if(!marked[v]) visit(G, v);
-            if(!marked[w]) visit(G, w);
+                _minimun_value += e.valor() + costTime[v];
+            }
+
+            // Es la solucion, ya qu ese ha llegado al ultimo que se buscaba
+            if(uf.unidos(0, G.V() - 1)){
+                _minimun_value += costTime[w];
+                lastElem = true;
+            }
         }
 
+    }
+
+    int getFinish(){
+        return lastElem;
     }
 
     int getCountMinimal(){
         return _minimun_value;
     }
 
-    int getCountMarkes(){
-        return _count_markes;
-    }
-
-
 private:
-    std::vector<bool> marked;
-    std::queue<Arista<int>> mst;
-    IndexPQ<Arista<int>, Comp> pq;
-    int _minimun_value;
-    int _count_markes;
 
-    void visit(GrafoValorado<int> G, int v)
-    {
-        marked[v] = true;
-        _count_markes++;
-        for (Arista<int> e : G.ady(v))
-            if (!marked[e.otro(v)])
-                pq.update(e.otro(v), e);
-    }
+    std::queue<AristaDirigida<int>> mst;
+    ConjuntosDisjuntos uf;
+
+    bool lastElem;
+    int _minimun_value;
 };
 
 
@@ -73,24 +86,35 @@ bool resuelveCaso(){
 
     std::cin >> vertex;
 
-    while(!std::cin)
+    while(vertex == 0) {
         return false;
+    }
+
+    std::vector<int> costTime(vertex);
+
+    for(int & aux : costTime) // Vector de costes en casa una de las posiciones es una coste de un vector
+        std::cin >> aux;
 
     std::cin >> edges;
 
-    GrafoValorado<int> graph(vertex);
+    GrafoDirigidoValorado<int> graph(vertex);
+
+    IndexPQ<AristaTime, Comp> pq(edges);
 
     for (int i = 0; i < edges; ++i) {
         std::cin >> vertex_ini >> vertex_end >> weight;
-        graph.ponArista(Arista<int>(vertex_ini-1, vertex_end-1, weight));
+        AristaDirigida<int> aris(vertex_ini-1, vertex_end-1, weight);
+        graph.ponArista(aris);
+        AristaTime arisTime(aris, costTime[vertex_ini-1] + costTime[vertex_end-1] + aris.valor());
+        pq.update(i, arisTime);
     }
 
-    Bridges bridge(graph);
+    Web bridge(graph, pq, costTime);
 
-    if(bridge.getCountMarkes() == graph.V())
+    if(bridge.getFinish())
         std::cout << bridge.getCountMinimal() << "\n";
     else
-        std::cout << "No hay puentes suficientes" << "\n";
+        std::cout << "IMPOSIBLE" << "\n";
 
     return true;
 }
