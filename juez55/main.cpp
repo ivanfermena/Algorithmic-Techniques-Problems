@@ -15,11 +15,26 @@
  */
 
 struct Hour{
-    int hor;
-    int min;
-    Hour(int h, int m):hor(h), min(m){}
-    Hour():hor(0), min(0){}
+    int minTime;
+    Hour(int hour, int minu){
+        minTime = (hour * 60) + minu;
+    }
+    Hour():minTime(0){}
 };
+
+struct Film{
+    int hourIni;
+    int hourEnd;
+
+    Film(Hour iniTime, int endTime):hourIni(iniTime.minTime){
+        hourEnd = iniTime.minTime + endTime;
+    }
+    Film():hourIni(0),hourEnd(0){}
+};
+
+bool operateInterval(Film const& a, Film const& b){
+    return a.hourEnd < b.hourEnd;
+}
 
 inline std::istream & operator >> (std::istream & in, Hour & rhs) {
     int horas, minutos;
@@ -29,47 +44,37 @@ inline std::istream & operator >> (std::istream & in, Hour & rhs) {
     return in;
 }
 
-bool operateInterval(Hour const& a, Hour const& b){
-    if (a.hor < b.hor)
-        return false;
-    else if (a.hor == b.hor && a.min < b.min)
-        return false;
-    else if (a.hor == b.hor && a.min == b.min)
-        return false;
-
-    return true;
-}
-
-int seleccion_tunnel(std::vector<Hour> const &flats) {
+int seleccion_tunnel(std::vector<Film> const &flats) {
 
     int N = flats.size();
-    int count_tunnel = 1;
-    long int last_end = flats[0].end;
+    int count_films = 1;
+    long int last_end = flats[0].hourEnd;
 
     for (int i = 1; i < N; ++i) {
-        if(flats[i].ini >= last_end){
-            last_end = flats[i].end;
-            count_tunnel++;
+        if(last_end + 10 <= (flats[i].hourIni)){
+            last_end = flats[i].hourEnd;
+            count_films++;
         }
     }
-    return count_tunnel;
+    return count_films;
 }
 
 bool resuelveCaso() {
 
     int hoursNumber;
-    long int elemIni, elemEnd;
+    Hour elemIni;
+    int elemEnd;
 
     std::cin >> hoursNumber;
 
     if(hoursNumber == 0)
         return false;
 
-    std::vector<Hour> flats;
+    std::vector<Film> flats;
 
     for(int i = 0; i < hoursNumber; ++i ){
         std::cin >> elemIni >> elemEnd;
-        flats.push_back(Hour(elemIni, elemEnd));
+        flats.push_back(Film(elemIni, elemEnd));
     }
 
     // Ordenamos los vectores
