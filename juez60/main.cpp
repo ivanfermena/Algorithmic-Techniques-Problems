@@ -37,7 +37,7 @@ bool isPosible(std::vector<int> const & vc, int L){
     m[0] = true;
 
     for (int i = 0; i < n; ++i) {
-        for (int l = L; l > 0; --l) {
+        for (int l = L; l >= 0; --l) {
             if(vc[i] > l)
                 m[l] = m[l];
             else
@@ -68,7 +68,7 @@ int formar(std::vector<int> const & vc, int L){
 
 // rellenar la matriz
     for (int i = 0; i < n; ++i) {
-        for (int l = L; l > 0; --l) {
+        for (int l = L; l >= 0; --l) {
             if(vc[i] > l)
                 m[l] = m[l];
             else
@@ -94,19 +94,18 @@ int formar(std::vector<int> const & vc, int L){
 int minimo(std::vector<int> const & vc, int L){
 
     int n = vc.size() - 1;
-    Matriz<int> m(n+1, L+1, INF);
-    m[0][0] = 0;
+    std::vector<int> m(L+1, INF);
+    m[0] = 0;
 
-    for (int i = 1; i <= n; ++i) {
-        m[i][0] = 0;
-        for (int l = 1; l <= L; ++l) {
+    for (int i = 0; i < n; ++i) {
+        for (int l = L; l >= 0; --l) {
             if(vc[i] > l)
-                m[i][l] = m[i-1][l];
+                m[l] = m[l];
             else
-                m[i][l] = std::min(m[i-1][l], m[i-1][l - vc[i]] + 1);
+                m[l] = std::min(m[l], m[l - vc[i]] + 1);
         }
     }
-    return m[n][L];
+    return m[L];
 }
 
 /**
@@ -125,19 +124,18 @@ int minimo(std::vector<int> const & vc, int L){
 int suma(std::vector<int> const & vc, std::vector<int> const & vcCostes, int L){
 
     int n = vc.size() - 1;
-    Matriz<int> m(n+1, L+1, INF);
-    m[0][0] = 0;
+    std::vector<int> m(L+1, INF);
+    m[0] = 0;
 
-    for (int i = 1; i <= n; ++i) {
-        m[i][0] = 0;
-        for (int l = 1; l <= L; ++l) {
+    for (int i = 0; i < n; ++i) {
+        for (int l = L; l >= 0; --l) {
             if(vc[i] > l)
-                m[i][l] = m[i-1][l];
+                m[l] = m[l];
             else
-                m[i][l] = std::min(m[i-1][l], m[i-1][l - vc[i]] + vcCostes[i]);
+                m[l] = std::min(m[l], m[l - vc[i]] + vcCostes[i]);
         }
     }
-    return m[n][L];
+    return m[L];
 }
 
 
