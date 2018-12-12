@@ -1,4 +1,4 @@
-// Ivan Fernandez Mena
+﻿// Ivan Fernandez Mena
 // E48
 
 #include <iostream>
@@ -6,14 +6,15 @@
 #include <fstream>
 #include <vector>
 #include <algorithm>
-#include "Matriz.h"
 
-#define INF 1000000
+#define INF 1000000000
 
 /**
  * En este proble ase tienen N varillas de longitud li con cada una un precio de ci. Se busca sin la posibilidad de romperlas
  * colocar las varillas para hacer una de longitud L. El problema viene dado con diferentes cuestiones cortas que hay que
  * resolver individualmente. En cada uno de los apartados se realizara una explicacion de la recursion.
+ *
+ * Coste total --> O(4(L)) --> O(L)
  *
  * Apartado 1:
  *
@@ -32,16 +33,14 @@
 
 bool isPosible(std::vector<int> const & vc, int L){
 
-    int n = vc.size() - 1;
+    int n = vc.size();
     std::vector<bool> m(L+1, false);
     m[0] = true;
 
-    for (int i = 0; i < n; ++i) {
-        for (int l = L; l >= 0; --l) {
-            if(vc[i] > l)
-                m[l] = m[l];
-            else
-                m[l] = m[l] || m[l - vc[i]];
+    for (int i = 1; i <= n; i++) {
+        for (int l = L; l >= 1; l--) {
+            if(vc[i-1] <= l)
+                m[l] = m[l] || m[l - vc[i-1]];
         }
     }
     return m[L];
@@ -62,17 +61,16 @@ bool isPosible(std::vector<int> const & vc, int L){
 // Calcular el numero total de maneras de obtener la varilla deseada soldando algunas de las varillas dadas, sin que importe el orden de soldadura.
 int formar(std::vector<int> const & vc, int L){
 
-    int n = vc.size() - 1;
+    int n = vc.size();
     std::vector<int> m(L+1, 0);
     m[0] = 1;
 
 // rellenar la matriz
-    for (int i = 0; i < n; ++i) {
-        for (int l = L; l >= 0; --l) {
-            if(vc[i] > l)
-                m[l] = m[l];
-            else
-                m[l] = m[l] + m[l - vc[i]];
+    for (int i = 1; i <= n; i++) {
+        for (int l = L; l >= 1; l--) {
+            if(vc[i-1] <= l) {
+                m[l] = m[l] + m[l - vc[i - 1]];
+            }
         }
     }
     return m[L];
@@ -93,16 +91,14 @@ int formar(std::vector<int> const & vc, int L){
 // Calcular el numero mınimo de varillas necesarias para obtener la varilla deseada.
 int minimo(std::vector<int> const & vc, int L){
 
-    int n = vc.size() - 1;
+    int n = vc.size();
     std::vector<int> m(L+1, INF);
     m[0] = 0;
 
-    for (int i = 0; i < n; ++i) {
-        for (int l = L; l >= 0; --l) {
-            if(vc[i] > l)
-                m[l] = m[l];
-            else
-                m[l] = std::min(m[l], m[l - vc[i]] + 1);
+    for (int i = 1; i <= n; i++) {
+        for (int l = L; l >= 1; l--) {
+            if(vc[i-1] <= l)
+                m[l] = std::min(m[l], m[l - vc[i-1]] + 1);
         }
     }
     return m[L];
@@ -123,16 +119,14 @@ int minimo(std::vector<int> const & vc, int L){
 // Calcular el mınimo coste posible necesario para obtener la varilla deseada
 int suma(std::vector<int> const & vc, std::vector<int> const & vcCostes, int L){
 
-    int n = vc.size() - 1;
+    int n = vc.size();
     std::vector<int> m(L+1, INF);
     m[0] = 0;
 
-    for (int i = 0; i < n; ++i) {
-        for (int l = L; l >= 0; --l) {
-            if(vc[i] > l)
-                m[l] = m[l];
-            else
-                m[l] = std::min(m[l], m[l - vc[i]] + vcCostes[i]);
+    for (int i = 1; i <= n; i++) {
+        for (int l = L; l >= 1; l--) {
+            if(vc[i-1] <= l)
+                m[l] = std::min(m[l], m[l - vc[i-1]] + vcCostes[i-1]);
         }
     }
     return m[L];
@@ -150,22 +144,23 @@ bool resuelveCaso() {
     if(!std::cin)
         return false;
 
-    std::vector<int> longVarillas(numVarillas + 1);
-    std::vector<int> costVarillas(numVarillas + 1);
+    std::vector<int> longVarillas;
+    std::vector<int> costVarillas;
 
-    for(int i = 1; i <= numVarillas; i++){
+    for(int i = 0; i < numVarillas; i++){
         int auxLong, auxCost;
         std::cin >> auxLong >> auxCost;
-        longVarillas[i] = auxLong;
-        costVarillas[i] = auxCost;
+        longVarillas.push_back(auxLong);
+        costVarillas.push_back(auxCost);
     }
 
     // Primer apartado
 
     if(isPosible(longVarillas, longVarilla)){
         std::cout << "SI " << formar(longVarillas, longVarilla) << " " << minimo(longVarillas, longVarilla) << " " << suma(longVarillas, costVarillas, longVarilla) << "\n";
-    }else
+    }else {
         std::cout << "NO" << "\n";
+    }
 
     return true;
 }
