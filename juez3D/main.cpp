@@ -1,108 +1,118 @@
-// Ivan Fernandez Mena TAIS48
-
 #include <iostream>
+#include <iomanip>
 #include <fstream>
-#include "Grafo.h"
+#include "GrafoValorado.h"
+#include <string>
+#include <queue>
+#include "IndexPQ.h"
 
-using namespace std;
+#define INF_MAX 100000000
 
-/*
-Hemos planteado el ejercicio como el de grafos bipartitos, marcando de un color los cruzes
-que tienen guardia y de otro los cruces que no pueden tener. Usamos un vector para marcar los colores
-e indicar si esta marcado o no y recorremos el grafo en profundidad, marcando unicamente con guardia los
-cruzes que tengan calle.
+bool operator<(Arista<int> const& a, Arista<int> const& b){
+    return a.valor() <= b.valor();
+}
 
-Controlamos que no haya dos guardias en una misma calle a partir de estos colores diferentes. 
-
-El coste del algoritmo principal es O(V + E) siendo V el numero de cruces y E el numero de calles. Este coste
-viene por recorrer una vez las calles y cruces.
-*/
-
-class Calles {
-public:
-	Calles(Grafo const& G) : marked(G.V(), -1) {
-		cont_0 = 0;
-		cont_1 = 0;
-		for (int v = 0; v < G.V(); ++v) {
-			if (marked[v] == -1) { // se recorre una nueva componente conexa
-				int conj = 0;
-				dfs(G, v, conj);
-			}
-		}
-	}
-
-	int getCont_min() {
-		return std::min(cont_0, cont_1);
-	}
-
-private:
-	vector<int> marked; // marked[v] = se ha visitado el vértice v?
-	int cont_0;
-	int cont_1;
-
-	// recorrido en profundidad de la componente de v
-	void dfs(Grafo const& G, int v, int conj) {
-		conj = (conj == 0 ? 1 : 0);
-		marked[v] = conj;
-
-		if(conj == 1 && G.ady(v).size() > 0 && cont_0 != -1)
-			cont_0++;
-		else if(conj == 0 && G.ady(v).size() > 0 && cont_1 != -1)
-			cont_1++;
-
-		for (int w : G.ady(v)) {
-			if (marked[w] == -1) {
-				dfs(G, w, marked[v]);
-			}
-			else {
-				if (marked[w] == marked[v]){
-					cont_0 = -1;
-					cont_1 = -1;
-				}
-			}
-		}
-	}
-
+struct aristasConteo{
+    Arista<int> aris;
+    int valueW = 0;
+    aristasConteo(Arista<int> a, int w):aris(a), valueW(w){}
 };
 
+class ViajeColegio{
+public:
+    ViajeColegio(GrafoValorado<int> const& G) : marked(G.V(), false), pq(G.V()), distTo(G.V(), INF_MAX), edgeTo(G.V()) {
+
+        distTo[0] = 0;
+        pq.push(0, 0); // Initialize pq with 0, weight 0.
+        while (!pq.empty()) {
+            int v = pq.top().elem;
+            pq.pop();
+            visit(G, v);
+        }
+    }
+
+    std::vector<Arista<int>> pathTo(int v){
+        std::vector<Arista<int>> path;
+        for (Arista<int> e = edgeTo[v]; e.uno() != 0; e = edgeTo[e.uno()]){
+            path.push_back(e);
+            v = e.uno();
+        }
+
+        path.push_back(edgeTo[v]);
+        return path;
+    }
+
+
+private:
+    std::vector<bool> marked;
+    std::queue<Arista<int>> mst;
+    IndexPQ<int> pq;
+    std::vector<Arista<int>> edgeTo;
+    std::vector<int> distTo;
+
+
+    void visit(GrafoValorado<int> const & G, int v) {
+        marked[v] = true;
+        for (Arista<int> e : G.ady(v)) {
+            int w = e.otro(v);
+
+            if (marked[w])
+            if (marked[w]) continue;
+
+            if (e.valor() < distTo[w]) {
+                edgeTo[w] = e;
+                distTo[w] = e.valor();
+                pq.update(w, distTo[w]);
+            }
+        }
+    }
+};
 
 bool resuelveCaso() {
-   int cruces, calles;
-   cin >> cruces >> calles;
-   
-   if (!cin)
-      return false;
-   
-   Grafo grafo(cruces);
-   for (int i = 0; i < calles; i++) {
-	   int aux1, aux2;
-	   cin >> aux1 >> aux2;
-	   grafo.ponArista(aux1-1, aux2-1);
-   }
-    
-   Calles calle(grafo);
 
-   if (calle.getCont_min() == -1)
-	   cout << "IMPOSIBLE\n";
-   else
-	   cout << calle.getCont_min() << "\n";
-   
-   return true;
+    int V, A, v, w, value;
+
+    std::cin >> V;
+
+    if(!std::cin)
+        return false;
+
+    std::cin >> A;
+
+    GrafoValorado<int> graphs(V);
+
+    // Insertamos las aristas
+    for (int i = 0; i < A; ++i) {
+        std::cin >> v >> w >> value;
+        graphs.ponArista(Arista<int>(v-1, w-1, value));
+    }
+
+    ViajeColegio vc(graphs);
+
+    std::vector<Arista<int>> ac = vc.pathTo(graphs.V()-1);
+
+    for(Arista<int> a : ac){
+        std::cout << a.valor() << " ";
+    }
+
+    return true;
 }
 
 int main() {
-   // ajustes para que cin extraiga directamente de un fichero
+    // Para la entrada por fichero.
+    // Comentar para acepta el reto
 #ifndef DOMJUDGE
-   std::ifstream in("datos.txt");
-   auto cinbuf = std::cin.rdbuf(in.rdbuf());
+    std::ifstream in("datos.txt");
+    auto cinbuf = std::cin.rdbuf(in.rdbuf()); //save old buf and redirect std::cin to casos.txt
 #endif
 
-   while (resuelveCaso());
-   
-   // para dejar todo como estaba al principio
-#ifndef DOMJUDGE
-   std::cin.rdbuf(cinbuf);
-   system("PAUSE");
+    while (resuelveCaso());
+
+    // Para restablecer entrada. Comentar para acepta el reto
+#ifndef DOMJUDGE // para dejar todo como estaba al principio
+    std::cin.rdbuf(cinbuf);
+    system("PAUSE");
 #endif
-   return 0;
+
+    return 0;
 }
